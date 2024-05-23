@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -7,6 +8,27 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _obscureText = true;
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+
+  Future<void> signInWithEmailPassword(
+      String email, String password, BuildContext context) async {
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      Navigator.pushNamed(context, '/home');
+      // Gebruiker succesvol ingelogd, voer vervolgacties uit
+    } catch (e) {
+      print('Inloggen mislukt: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Inloggen mislukt: $e'),
+      ));
+      // Toon een foutmelding aan de gebruiker of neem andere foutafhandelingsmaatregelen
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +63,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             SizedBox(height: 20),
             TextField(
+              controller: emailController, // Gebruik de controller hier
               decoration: InputDecoration(
                 labelText: 'E-mail',
                 labelStyle: TextStyle(color: Colors.white),
@@ -55,6 +78,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             SizedBox(height: 20),
             TextField(
+              controller: passwordController, // Gebruik de controller hier
               obscureText: _obscureText,
               decoration: InputDecoration(
                 labelText: 'Password',
@@ -84,7 +108,8 @@ class _LoginPageState extends State<LoginPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Handle log in button press
+                  signInWithEmailPassword(
+                      emailController.text, passwordController.text, context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue, // Button color
