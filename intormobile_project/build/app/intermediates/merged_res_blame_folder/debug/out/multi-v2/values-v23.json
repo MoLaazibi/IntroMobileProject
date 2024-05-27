@@ -1,10 +1,48 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.intormobile_project.app-mergeDebugResources-34:/values-v23/values-v23.xml",
+            "outputFile": "com.example.intormobile_project.app-mergeDebugResources-45:/values-v23/values-v23.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\ali_e\\.gradle\\caches\\transforms-3\\9a5742a8ae24d1f6cb062dbab491d07a\\transformed\\appcompat-1.2.0\\res\\values-v23\\values-v23.xml",
+                    "source": "C:\\Users\\ali_e\\.gradle\\caches\\transforms-3\\9d84f0e73ec3ff7e6654c76b47dd1a7b\\transformed\\cardview-1.0.0\\res\\values-v23\\values-v23.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "4",
+                        "endColumns": "12",
+                        "endOffsets": "200"
+                    },
+                    "to": {
+                        "startLines": "50",
+                        "startColumns": "4",
+                        "startOffsets": "3232",
+                        "endLines": "52",
+                        "endColumns": "12",
+                        "endOffsets": "3377"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\ali_e\\.gradle\\caches\\transforms-3\\9b63e31e69b57f030bb8f9838919d350\\transformed\\material-1.4.0\\res\\values-v23\\values-v23.xml",
+                    "from": {
+                        "startLines": "2,6",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,320",
+                        "endLines": "5,9",
+                        "endColumns": "10,10",
+                        "endOffsets": "315,588"
+                    },
+                    "to": {
+                        "startLines": "53,57",
+                        "startColumns": "4,4",
+                        "startOffsets": "3382,3647",
+                        "endLines": "56,60",
+                        "endColumns": "10,10",
+                        "endOffsets": "3642,3915"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\ali_e\\.gradle\\caches\\transforms-3\\001f5ac2dc96b58b3628cc75afd66bf7\\transformed\\appcompat-1.4.0\\res\\values-v23\\values-v23.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,20,34,35,36,39,43,44,45,46",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4",

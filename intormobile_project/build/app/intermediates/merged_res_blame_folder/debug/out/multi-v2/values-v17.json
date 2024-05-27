@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.intormobile_project.app-mergeDebugResources-34:/values-v17/values-v17.xml",
+            "outputFile": "com.example.intormobile_project.app-mergeDebugResources-45:/values-v17/values-v17.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\ali_e\\.gradle\\caches\\transforms-3\\9a5742a8ae24d1f6cb062dbab491d07a\\transformed\\appcompat-1.2.0\\res\\values-v17\\values-v17.xml",
+                    "source": "C:\\Users\\ali_e\\.gradle\\caches\\transforms-3\\001f5ac2dc96b58b3628cc75afd66bf7\\transformed\\appcompat-1.4.0\\res\\values-v17\\values-v17.xml",
                     "from": {
                         "startLines": "2,5,9,12,15,18,22,25,29,33,37,40,43,46,50,53,57",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",

@@ -1,155 +1,54 @@
+// lib/main.dart
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_web_plugins/url_strategy.dart';
-import 'auth/firebase_auth/firebase_user_provider.dart';
-import 'auth/firebase_auth/auth_util.dart';
-import 'backend/firebase/firebase_config.dart';
-import 'flutter_flow/flutter_flow_theme.dart';
-import 'flutter_flow/flutter_flow_util.dart';
-import 'flutter_flow/nav/nav.dart';
-import 'Games/Games.dart'; // Correct import for Games.dart
+import 'package:intormobile_project/firebase_options.dart';
+import 'games.dart'; // Import the game.dart file
+import 'package:intl/date_symbol_data_local.dart'; // Import the necessary initialization function
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  usePathUrlStrategy();
-  await initFirebase();
 
-  await FlutterFlowTheme.initialize();
-
-  runApp(const MyApp());
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  // Ensure locale data is initialized before running the app
+  initializeDateFormatting('nl_NL', null).then((_) {
+    runApp(MyApp());
+  });
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-
-  static _MyAppState of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>()!;
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = FlutterFlowTheme.themeMode;
-
-  late Stream<BaseAuthUser> userStream;
-
-  late AppStateNotifier _appStateNotifier;
-  late GoRouter _router;
-
-  final authUserSub = authenticatedUserStream.listen((_) {});
-
-  @override
-  void initState() {
-    super.initState();
-
-    _appStateNotifier = AppStateNotifier.instance;
-    _router = createRouter(_appStateNotifier);
-    userStream = aIPhotoAppFirebaseUserStream()
-      ..listen((user) => _appStateNotifier.update(user));
-    jwtTokenStream.listen((_) {});
-    Future.delayed(
-      const Duration(milliseconds: 1000),
-      () => _appStateNotifier.stopShowingSplashImage(),
-    );
-  }
-
-  @override
-  void dispose() {
-    authUserSub.cancel();
-
-    super.dispose();
-  }
-
-  void setThemeMode(ThemeMode mode) => setState(() {
-        _themeMode = mode;
-        FlutterFlowTheme.saveThemeMode(mode);
-      });
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Padel',
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', '')],
+    return MaterialApp(
+      title: 'Wedstrijden App',
       theme: ThemeData(
-        brightness: Brightness.light,
-        useMaterial3: false,
+        primarySwatch: Colors.blue,
       ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: false,
-      ),
-      themeMode: _themeMode,
-      routerConfig: _router,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HomeScreen(), // Define your home screen here
+        '/games': (context) => GamesPage(), // Define the route to GamesPage
+      },
     );
   }
 }
 
-class NavBarPage extends StatefulWidget {
-  const NavBarPage({super.key, this.initialPage, this.page});
-
-  final String? initialPage;
-  final Widget? page;
-
-  @override
-  _NavBarPageState createState() => _NavBarPageState();
-}
-
-class _NavBarPageState extends State<NavBarPage> {
-  String _currentPageName = 'Home';
-  late Widget? _currentPage;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentPageName = widget.initialPage ?? _currentPageName;
-    _currentPage = widget.page;
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final tabs = {
-      'Games': GamesPage(),
-    };
-    final currentIndex = tabs.keys.toList().indexOf(_currentPageName);
-
     return Scaffold(
-      body: _currentPage ?? tabs[_currentPageName],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (i) => setState(() {
-          _currentPage = null;
-          _currentPageName = tabs.keys.toList()[i];
-        }),
-        backgroundColor: Colors.white,
-        selectedItemColor: FlutterFlowTheme.of(context).primary,
-        unselectedItemColor: const Color(0x8A000000),
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        type: BottomNavigationBarType.fixed,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.home,
-              size: 24.0,
-            ),
-            label: '',
-            tooltip: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              Icons.sports_soccer, // Changed to a sports icon
-              size: 24.0,
-            ),
-            label: 'Games',
-            tooltip: '',
-          ),
-        ],
+      appBar: AppBar(
+        title: Text('Home Screen'),
+      ),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/games');
+          },
+          child: Text('Go to Games Page'),
+        ),
       ),
     );
   }

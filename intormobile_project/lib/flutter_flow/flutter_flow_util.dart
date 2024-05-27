@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
 
-
 export 'keep_alive_wrapper.dart';
 export 'lat_lng.dart';
 export 'place.dart';
@@ -256,8 +255,8 @@ extension StringDocRef on String {
   DocumentReference get ref => FirebaseFirestore.instance.doc(this);
 }
 
-void setDarkModeSetting(BuildContext context, ThemeMode themeMode) =>
-    MyApp.of(context).setThemeMode(themeMode);
+//void setDarkModeSetting(BuildContext context, ThemeMode themeMode) =>
+//    MyApp.of(context).setThemeMode(themeMode);
 
 void showSnackbar(
   BuildContext context,

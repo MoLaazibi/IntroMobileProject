@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "983017452505",
+    "project_id": "intromobileprojectfb",
+    "storage_bucket": "intromobileprojectfb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:983017452505:android:3adb04617153aac0a89fc8",
+        "android_client_info": {
+          "package_name": "com.example.intormobile_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD41TX8k2Z5p1hEvXGlALabZFmNAjRf_Pw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:983017452505:android:d84c4c9f0d03eb68a89fc8",
+        "android_client_info": {
+          "package_name": "com.mycompany.playtomic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD41TX8k2Z5p1hEvXGlALabZFmNAjRf_Pw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
