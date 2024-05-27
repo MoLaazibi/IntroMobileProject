@@ -104,12 +104,14 @@ class HomeScreen extends StatelessWidget {
                       'Book a court',
                       'If you already know who you are playing with',
                       Icons.search,
-                      context),
+                      context,
+                      navUrl: "/court_search"),
                   _buildFeatureCard(
-                      'Play an open match',
-                      'If you are looking for players at your level',
-                      Icons.sports_tennis,
-                      context),
+                    'Play an open match',
+                    'If you are looking for players at your level',
+                    Icons.sports_tennis,
+                    context,
+                  ),
                   _buildFeatureCard(
                       'Classes',
                       'Find classes to improve your game',
@@ -160,10 +162,11 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildFeatureCard(
-      String title, String subtitle, IconData icon, BuildContext context) {
+      String title, String subtitle, IconData icon, BuildContext context,
+      {String navUrl = ""}) {
     return InkWell(
       onTap: () {
-        // Action when feature card is tapped
+        Navigator.pushNamed(context, navUrl);
         print('$title tapped');
       },
       child: Card(

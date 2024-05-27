@@ -1,8 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intormobile_project/firebase_options.dart';
 import 'package:intormobile_project/pages/community.dart';
+import 'package:intormobile_project/pages/court_reservation.dart';
+import 'package:intormobile_project/pages/court_search.dart';
 import 'package:intormobile_project/pages/home.dart';
 import 'package:intormobile_project/pages/login.dart';
 import 'package:intormobile_project/pages/register.dart';
@@ -30,7 +31,8 @@ class MyApp extends StatelessWidget {
           '/register': (context) => RegisterPage(),
           '/login': (context) => LoginPage(),
           '/home': (context) => HomePage(),
-          '/community': (context) => CommunityPage()
+          '/community': (context) => CommunityPage(),
+          '/court_search': (context) => CourtSearchPage(),
         });
   }
 }
