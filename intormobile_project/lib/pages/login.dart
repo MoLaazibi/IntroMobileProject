@@ -19,14 +19,12 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
-      Navigator.pushNamed(context, '/home');
-      // Gebruiker succesvol ingelogd, voer vervolgacties uit
+      Navigator.pushNamed(context, '/home', arguments: userCredential.user);
     } catch (e) {
       print('Inloggen mislukt: $e');
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Inloggen mislukt: $e'),
       ));
-      // Toon een foutmelding aan de gebruiker of neem andere foutafhandelingsmaatregelen
     }
   }
 
@@ -63,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             SizedBox(height: 20),
             TextField(
-              controller: emailController, // Gebruik de controller hier
+              controller: emailController,
               decoration: InputDecoration(
                 labelText: 'E-mail',
                 labelStyle: TextStyle(color: Colors.white),
@@ -78,7 +76,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             SizedBox(height: 20),
             TextField(
-              controller: passwordController, // Gebruik de controller hier
+              controller: passwordController,
               obscureText: _obscureText,
               decoration: InputDecoration(
                 labelText: 'Password',
@@ -112,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                       emailController.text, passwordController.text, context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, // Button color
+                  backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30.0),
                   ),

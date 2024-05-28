@@ -1,38 +1,49 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intormobile_project/firebase_options.dart';
-import 'package:intormobile_project/pages/community.dart';
-import 'package:intormobile_project/pages/court_reservation.dart';
-import 'package:intormobile_project/pages/court_search.dart';
-import 'package:intormobile_project/pages/home.dart';
-import 'package:intormobile_project/pages/login.dart';
-import 'package:intormobile_project/pages/register.dart';
-import 'package:intormobile_project/pages/starts.dart';
+import 'pages/start.dart';
+import 'pages/login.dart';
+import 'pages/register.dart';
+import 'pages/home.dart';
+import 'pages/court_search.dart';
+import 'pages/court_reservation.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        initialRoute: '/',
-        routes: {
-          '/': (context) => StartPage(),
-          '/register': (context) => RegisterPage(),
-          '/login': (context) => LoginPage(),
-          '/home': (context) => HomePage(),
-          '/community': (context) => CommunityPage(),
-          '/court_search': (context) => CourtSearchPage(),
-        });
+      title: 'Playtomic',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => StartPage(),
+        '/login': (context) => LoginPage(),
+        '/register': (context) => RegisterPage(),
+        '/home': (context) => HomePage(
+            currentUser: ModalRoute.of(context)?.settings.arguments as User),
+        '/court_search': (context) {
+          var args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>;
+          return CourtSearchPage(currentUser: args['currentUser']);
+        },
+        '/court_reservation': (context) {
+          var args = ModalRoute.of(context)?.settings.arguments
+              as Map<String, dynamic>;
+          return CourtReservationPage(
+            court: args['court'],
+            currentUser: args['currentUser'],
+          );
+        },
+      },
+    );
   }
 }

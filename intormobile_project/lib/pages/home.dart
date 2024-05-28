@@ -1,7 +1,12 @@
 import 'community.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomePage extends StatefulWidget {
+  final User currentUser;
+
+  HomePage({required this.currentUser});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -149,8 +154,7 @@ class HomeScreen extends StatelessWidget {
                         'Ter Eiken',
                         'Edegem',
                         'https://static.wixstatic.com/media/f5002f_66a73f90dfb14e448c3a96484f31b98f~mv2.jpg/v1/fill/w_456,h_350,al_c,q_80,usm_0.66_1.00_0.01,enc_auto/DJI_0106.jpg',
-                        context), // New club card added here
-                    // Add more club cards here
+                        context),
                   ],
                 ),
               ),
@@ -166,7 +170,9 @@ class HomeScreen extends StatelessWidget {
       {String navUrl = ""}) {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, navUrl);
+        Navigator.pushNamed(context, navUrl, arguments: {
+          'currentUser': FirebaseAuth.instance.currentUser,
+        });
         print('$title tapped');
       },
       child: Card(

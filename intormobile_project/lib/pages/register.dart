@@ -32,7 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
         'mobile': mobile,
       });
 
-      Navigator.pushNamed(context, "/home");
+      Navigator.pushNamed(context, "/home", arguments: userCredential.user);
     } catch (e) {
       print('Registration failed: $e');
     }
@@ -104,7 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                'Sign in',
+                'Sign up',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 24,
