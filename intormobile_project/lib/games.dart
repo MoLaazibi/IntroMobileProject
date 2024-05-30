@@ -53,8 +53,9 @@ class _GamesPageState extends State<GamesPage> {
         selectedCourt != null) {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('matches')
+          .where('keuzeSport', isEqualTo: selectedSport)
           .where('level', isEqualTo: selectedLevel)
-          .where('court', isEqualTo: selectedCourt!.reference)
+          .where('courtId', isEqualTo: selectedCourt!.reference.id)
           .get();
 
       setState(() {
@@ -199,14 +200,70 @@ class AvailableMatches extends StatelessWidget {
                   itemCount: matches.length,
                   itemBuilder: (context, index) {
                     DocumentSnapshot match = matches[index];
-                    return ListTile(
-                      title: Text(match['name']),
-                      subtitle: Text('Level: ${match['level']}'),
-                    );
+                    Map<String, dynamic> data =
+                        match.data() as Map<String, dynamic>;
+
+                    return MatchCard(data: data);
                   },
                 ),
         ),
       ],
+    );
+  }
+}
+
+class MatchCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+
+  MatchCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    List<dynamic> players = data['Players'];
+    String courtId = data['courtId'];
+    String keuzeSport = data['keuzeSport'];
+    String level = data['level'];
+
+    return FutureBuilder<DocumentSnapshot>(
+      future:
+          FirebaseFirestore.instance.collection('courts').doc(courtId).get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+
+        var courtData = snapshot.data!.data() as Map<String, dynamic>;
+        String courtName = courtData['name'];
+        String courtLocation = courtData['location'];
+        String courtImgUrl = courtData['img_url'];
+        int price = courtData['price'];
+
+        return Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: Image.network(courtImgUrl,
+                    width: 50, height: 50, fit: BoxFit.cover),
+                title: Text(courtName),
+                subtitle: Text('$courtLocation · $price EUR'),
+              ),
+              Row(
+                children: players.map((player) {
+                  return Expanded(
+                    child: Column(
+                      children: [
+                        Image.network(player['imageUrl'],
+                            width: 50, height: 50),
+                        Text(player['name']),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -237,76 +294,78 @@ class _SportFilterDialogState extends State<SportFilterDialog> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    Text(
-                      'Welke sport wil je spelen?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    Spacer(),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                ListTile(
-                  title: Text('Padel'),
-                  leading: Radio<String>(
-                    value: 'Padel',
-                    groupValue: selectedSport,
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedSport = value;
-                      });
-                    },
-                  ),
-                ),
-                ListTile(
-                  title: Text('Tennis'),
-                  leading: Radio<String>(
-                    value: 'Tennis',
-                    groupValue: selectedSport,
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedSport = value;
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: selectedSport != null
-                      ? () {
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
                           Navigator.of(context).pop();
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return SkillLevelDialog(
-                                selectedSport: selectedSport!,
-                                onSelected: widget.onSelected,
-                              );
-                            },
-                          );
-                        }
-                      : null,
-                  child: Text('Volgende'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 36),
+                        },
+                      ),
+                      Text(
+                        'Welke sport wil je spelen?',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  ListTile(
+                    title: Text('Padel'),
+                    leading: Radio<String>(
+                      value: 'Padel',
+                      groupValue: selectedSport,
+                      onChanged: (String? value) {
+                        setState(() {
+                          selectedSport = value;
+                        });
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('Tennis'),
+                    leading: Radio<String>(
+                      value: 'Tennis',
+                      groupValue: selectedSport,
+                      onChanged: (String? value) {
+                        setState(() {
+                          selectedSport = value;
+                        });
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: selectedSport != null
+                        ? () {
+                            Navigator.of(context).pop();
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return SkillLevelDialog(
+                                  selectedSport: selectedSport!,
+                                  onSelected: widget.onSelected,
+                                );
+                              },
+                            );
+                          }
+                        : null,
+                    child: Text('Volgende'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 36),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -342,134 +401,136 @@ class _SkillLevelDialogState extends State<SkillLevelDialog> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return SportFilterDialog(
-                                onSelected: widget.onSelected);
-                          },
-                        );
-                      },
-                    ),
-                    Text(
-                      'Welk niveau heb je?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    Spacer(),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                Text(
-                  'Om je betere resultaten te kunnen bieden, moeten we je niveau kennen',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                ListTile(
-                  title: Text('Beginner'),
-                  leading: Radio<String>(
-                    value: 'Beginner',
-                    groupValue: selectedLevel,
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedLevel = value;
-                      });
-                    },
-                  ),
-                ),
-                ListTile(
-                  title: Text('Medium'),
-                  leading: Radio<String>(
-                    value: 'Medium',
-                    groupValue: selectedLevel,
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedLevel = value;
-                      });
-                    },
-                  ),
-                ),
-                ListTile(
-                  title: Text('Medium hoog'),
-                  leading: Radio<String>(
-                    value: 'Medium hoog',
-                    groupValue: selectedLevel,
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedLevel = value;
-                      });
-                    },
-                  ),
-                ),
-                ListTile(
-                  title: Text('Hoog'),
-                  leading: Radio<String>(
-                    value: 'Hoog',
-                    groupValue: selectedLevel,
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedLevel = value;
-                      });
-                    },
-                  ),
-                ),
-                ListTile(
-                  title: Text('Competitie'),
-                  leading: Radio<String>(
-                    value: 'Competitie',
-                    groupValue: selectedLevel,
-                    onChanged: (String? value) {
-                      setState(() {
-                        selectedLevel = value;
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {
-                    // TODO: Handle "Wil je de volledige test doen?" click
-                  },
-                  child: Text(
-                    'Wil je de volledige test doen?',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ),
-                SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: selectedLevel != null
-                      ? () {
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
                           Navigator.of(context).pop();
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
-                              return DateSelectionDialog(
-                                initialSport: widget.selectedSport,
-                                initialLevel: selectedLevel!,
-                                onSelected: widget.onSelected,
-                              );
+                              return SportFilterDialog(
+                                  onSelected: widget.onSelected);
                             },
                           );
-                        }
-                      : null,
-                  child: Text('Volgende'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 36),
+                        },
+                      ),
+                      Text(
+                        'Welk niveau heb je?',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  Text(
+                    'Om je betere resultaten te kunnen bieden, moeten we je niveau kennen',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  ListTile(
+                    title: Text('Beginner'),
+                    leading: Radio<String>(
+                      value: 'Beginner',
+                      groupValue: selectedLevel,
+                      onChanged: (String? value) {
+                        setState(() {
+                          selectedLevel = value;
+                        });
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('Medium'),
+                    leading: Radio<String>(
+                      value: 'Medium',
+                      groupValue: selectedLevel,
+                      onChanged: (String? value) {
+                        setState(() {
+                          selectedLevel = value;
+                        });
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('Medium hoog'),
+                    leading: Radio<String>(
+                      value: 'Medium hoog',
+                      groupValue: selectedLevel,
+                      onChanged: (String? value) {
+                        setState(() {
+                          selectedLevel = value;
+                        });
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('Hoog'),
+                    leading: Radio<String>(
+                      value: 'Hoog',
+                      groupValue: selectedLevel,
+                      onChanged: (String? value) {
+                        setState(() {
+                          selectedLevel = value;
+                        });
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    title: Text('Competitie'),
+                    leading: Radio<String>(
+                      value: 'Competitie',
+                      groupValue: selectedLevel,
+                      onChanged: (String? value) {
+                        setState(() {
+                          selectedLevel = value;
+                        });
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      // TODO: Handle "Wil je de volledige test doen?" click
+                    },
+                    child: Text(
+                      'Wil je de volledige test doen?',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: selectedLevel != null
+                        ? () {
+                            Navigator.of(context).pop();
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return DateSelectionDialog(
+                                  initialSport: widget.selectedSport,
+                                  initialLevel: selectedLevel!,
+                                  onSelected: widget.onSelected,
+                                );
+                              },
+                            );
+                          }
+                        : null,
+                    child: Text('Volgende'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 36),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -516,128 +577,131 @@ class _DateSelectionDialogState extends State<DateSelectionDialog> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return SkillLevelDialog(
-                              selectedSport: widget.initialSport,
-                              onSelected: widget.onSelected,
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    Text(
-                      'Wanneer wil je spelen?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    Spacer(),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Selecteer je dagen (max. 7)',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                SizedBox(height: 8),
-                Container(
-                  height: 100,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: dates.length,
-                    itemBuilder: (context, index) {
-                      final date = dates[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (selectedDays.where((day) => day).length < 7 ||
-                                  selectedDays[index]) {
-                                selectedDays[index] = !selectedDays[index];
-                              }
-                            });
-                          },
-                          child: Container(
-                            width: 80,
-                            decoration: BoxDecoration(
-                              color: selectedDays[index]
-                                  ? Colors.blue
-                                  : Colors.white,
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  dayFormat.format(date),
-                                  style: TextStyle(
-                                    color: selectedDays[index]
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
-                                ),
-                                Text(
-                                  dateFormat.format(date),
-                                  style: TextStyle(
-                                    color: selectedDays[index]
-                                        ? Colors.white
-                                        : Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: selectedDays.contains(true)
-                      ? () {
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
                           Navigator.of(context).pop();
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
-                              return LocationSelectionDialog(
-                                initialSport: widget.initialSport,
-                                initialLevel: widget.initialLevel,
-                                selectedDays: selectedDays
-                                    .asMap()
-                                    .entries
-                                    .where((entry) => entry.value)
-                                    .map((entry) => dates[entry.key])
-                                    .toList(),
+                              return SkillLevelDialog(
+                                selectedSport: widget.initialSport,
                                 onSelected: widget.onSelected,
                               );
                             },
                           );
-                        }
-                      : null,
-                  child: Text('Volgende'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 36),
+                        },
+                      ),
+                      Text(
+                        'Wanneer wil je spelen?',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  SizedBox(height: 8),
+                  Text(
+                    'Selecteer je dagen (max. 7)',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: dates.length,
+                      itemBuilder: (context, index) {
+                        final date = dates[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (selectedDays.where((day) => day).length <
+                                        7 ||
+                                    selectedDays[index]) {
+                                  selectedDays[index] = !selectedDays[index];
+                                }
+                              });
+                            },
+                            child: Container(
+                              width: 80,
+                              decoration: BoxDecoration(
+                                color: selectedDays[index]
+                                    ? Colors.blue
+                                    : Colors.white,
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    dayFormat.format(date),
+                                    style: TextStyle(
+                                      color: selectedDays[index]
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
+                                  Text(
+                                    dateFormat.format(date),
+                                    style: TextStyle(
+                                      color: selectedDays[index]
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: selectedDays.contains(true)
+                        ? () {
+                            Navigator.of(context).pop();
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return LocationSelectionDialog(
+                                  initialSport: widget.initialSport,
+                                  initialLevel: widget.initialLevel,
+                                  selectedDays: selectedDays
+                                      .asMap()
+                                      .entries
+                                      .where((entry) => entry.value)
+                                      .map((entry) => dates[entry.key])
+                                      .toList(),
+                                  onSelected: widget.onSelected,
+                                );
+                              },
+                            );
+                          }
+                        : null,
+                    child: Text('Volgende'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 36),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -714,149 +778,151 @@ class _LocationSelectionDialogState extends State<LocationSelectionDialog> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return DateSelectionDialog(
-                              initialSport: widget.initialSport,
-                              initialLevel: widget.initialLevel,
-                              onSelected: widget.onSelected,
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    Text(
-                      'Waar wil je spelen?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    Spacer(),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Zoek op naam of locatie',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Container(
-                  height: 150,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: filteredCourts.length,
-                    itemBuilder: (context, index) {
-                      DocumentSnapshot court = filteredCourts[index];
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedCourt = court;
-                          });
-                        },
-                        child: Container(
-                          width: 120,
-                          margin: EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: selectedCourt == court
-                                  ? Colors.blue
-                                  : Colors.grey,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Image.network(
-                                  court['img_url'],
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(court['name']),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                CheckboxListTile(
-                  title: Text('Recente clubs'),
-                  value: false,
-                  onChanged: (bool? value) {},
-                ),
-                CheckboxListTile(
-                  title: Text('Favoriete clubs'),
-                  value: false,
-                  onChanged: (bool? value) {},
-                ),
-                SizedBox(height: 8),
-                Text('Selecteer een afstand'),
-                Slider(
-                  value: selectedDistance,
-                  min: 1,
-                  max: 25,
-                  divisions: 5,
-                  label: '${selectedDistance.round()} km',
-                  onChanged: (double value) {
-                    setState(() {
-                      selectedDistance = value;
-                    });
-                  },
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(5, (index) {
-                    int value = (index + 1) * 5;
-                    return Text('$value');
-                  }),
-                ),
-                ElevatedButton(
-                  onPressed: selectedCourt != null
-                      ? () {
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
                           Navigator.of(context).pop();
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
-                              return TimeSelectionDialog(
+                              return DateSelectionDialog(
                                 initialSport: widget.initialSport,
                                 initialLevel: widget.initialLevel,
-                                selectedDays: widget.selectedDays,
-                                selectedCourt: selectedCourt!,
                                 onSelected: widget.onSelected,
                               );
                             },
                           );
-                        }
-                      : null,
-                  child: Text('Volgende'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 36),
+                        },
+                      ),
+                      Text(
+                        'Waar wil je spelen?',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  SizedBox(height: 8),
+                  TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Zoek op naam of locatie',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 150,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: filteredCourts.length,
+                      itemBuilder: (context, index) {
+                        DocumentSnapshot court = filteredCourts[index];
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedCourt = court;
+                            });
+                          },
+                          child: Container(
+                            width: 120,
+                            margin: EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: selectedCourt == court
+                                    ? Colors.blue
+                                    : Colors.grey,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Image.network(
+                                    court['img_url'],
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(court['name']),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  CheckboxListTile(
+                    title: Text('Recente clubs'),
+                    value: false,
+                    onChanged: (bool? value) {},
+                  ),
+                  CheckboxListTile(
+                    title: Text('Favoriete clubs'),
+                    value: false,
+                    onChanged: (bool? value) {},
+                  ),
+                  SizedBox(height: 8),
+                  Text('Selecteer een afstand'),
+                  Slider(
+                    value: selectedDistance,
+                    min: 1,
+                    max: 25,
+                    divisions: 5,
+                    label: '${selectedDistance.round()} km',
+                    onChanged: (double value) {
+                      setState(() {
+                        selectedDistance = value;
+                      });
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(5, (index) {
+                      int value = (index + 1) * 5;
+                      return Text('$value');
+                    }),
+                  ),
+                  ElevatedButton(
+                    onPressed: selectedCourt != null
+                        ? () {
+                            Navigator.of(context).pop();
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return TimeSelectionDialog(
+                                  initialSport: widget.initialSport,
+                                  initialLevel: widget.initialLevel,
+                                  selectedDays: widget.selectedDays,
+                                  selectedCourt: selectedCourt!,
+                                  onSelected: widget.onSelected,
+                                );
+                              },
+                            );
+                          }
+                        : null,
+                    child: Text('Volgende'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 36),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -901,117 +967,119 @@ class _TimeSelectionDialogState extends State<TimeSelectionDialog> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return LocationSelectionDialog(
-                              initialSport: widget.initialSport,
-                              initialLevel: widget.initialLevel,
-                              selectedDays: widget.selectedDays,
-                              onSelected: widget.onSelected,
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    Text(
-                      'Wanneer wil je spelen?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    Spacer(),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Selecteer je tijd',
-                  style: TextStyle(color: Colors.grey),
-                ),
-                SizedBox(height: 8),
-                RadioListTile(
-                  title: Text('De hele dag'),
-                  value: 'De hele dag',
-                  groupValue: selectedTime,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value as String?;
-                    });
-                  },
-                ),
-                RadioListTile(
-                  title: Text('Ochtend 06:00 - 12:00'),
-                  value: 'Ochtend',
-                  groupValue: selectedTime,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value as String?;
-                    });
-                  },
-                ),
-                RadioListTile(
-                  title: Text('Middag 12:00 - 18:00'),
-                  value: 'Middag',
-                  groupValue: selectedTime,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value as String?;
-                    });
-                  },
-                ),
-                RadioListTile(
-                  title: Text('Avond 18:00 - 24:00'),
-                  value: 'Avond',
-                  groupValue: selectedTime,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value as String?;
-                    });
-                  },
-                ),
-                RadioListTile(
-                  title: Text('Specifieke uren Maximaal 6 uur'),
-                  value: 'Specifieke uren',
-                  groupValue: selectedTime,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedTime = value as String?;
-                    });
-                  },
-                ),
-                SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: selectedTime != null
-                      ? () {
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
                           Navigator.of(context).pop();
-                          widget.onSelected(
-                            widget.initialSport,
-                            widget.initialLevel,
-                            widget.selectedDays,
-                            widget.selectedCourt,
-                            selectedTime,
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return LocationSelectionDialog(
+                                initialSport: widget.initialSport,
+                                initialLevel: widget.initialLevel,
+                                selectedDays: widget.selectedDays,
+                                onSelected: widget.onSelected,
+                              );
+                            },
                           );
-                        }
-                      : null,
-                  child: Text('Volgende'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 36),
+                        },
+                      ),
+                      Text(
+                        'Wanneer wil je spelen?',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  SizedBox(height: 8),
+                  Text(
+                    'Selecteer je tijd',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  RadioListTile(
+                    title: Text('De hele dag'),
+                    value: 'De hele dag',
+                    groupValue: selectedTime,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTime = value as String?;
+                      });
+                    },
+                  ),
+                  RadioListTile(
+                    title: Text('Ochtend 06:00 - 12:00'),
+                    value: 'Ochtend',
+                    groupValue: selectedTime,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTime = value as String?;
+                      });
+                    },
+                  ),
+                  RadioListTile(
+                    title: Text('Middag 12:00 - 18:00'),
+                    value: 'Middag',
+                    groupValue: selectedTime,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTime = value as String?;
+                      });
+                    },
+                  ),
+                  RadioListTile(
+                    title: Text('Avond 18:00 - 24:00'),
+                    value: 'Avond',
+                    groupValue: selectedTime,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTime = value as String?;
+                      });
+                    },
+                  ),
+                  RadioListTile(
+                    title: Text('Specifieke uren Maximaal 6 uur'),
+                    value: 'Specifieke uren',
+                    groupValue: selectedTime,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedTime = value as String?;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: selectedTime != null
+                        ? () {
+                            Navigator.of(context).pop();
+                            widget.onSelected(
+                              widget.initialSport,
+                              widget.initialLevel,
+                              widget.selectedDays,
+                              widget.selectedCourt,
+                              selectedTime,
+                            );
+                          }
+                        : null,
+                    child: Text('Volgende'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 36),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
