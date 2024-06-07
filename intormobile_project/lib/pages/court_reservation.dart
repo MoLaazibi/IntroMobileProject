@@ -67,7 +67,7 @@ class _CourtReservationPageState extends State<CourtReservationPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
-                'Price: €${courtData['price'].toString()} per hour',
+                'Price: €${courtData['price'].toString()} per 30 min',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ),
@@ -96,51 +96,64 @@ class _CourtReservationPageState extends State<CourtReservationPage> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                children: availableSlots.map<Widget>((slot) {
-                  bool isSelected = selectedSlot == slot;
-                  return Container(
-                    width: 80,
-                    height: 40,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (slot['booked']) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Slot already booked!'),
-                          ));
-                          setState(() {
-                            selectedSlot = null;
-                          });
-                        } else {
-                          setState(() {
-                            selectedSlot = slot;
-                          });
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: slot['booked']
-                            ? Colors.grey
-                            : isSelected
-                                ? Colors.blue
-                                : Colors.white,
-                        foregroundColor:
-                            isSelected ? Colors.white : Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        side: BorderSide(
-                          color: isSelected ? Colors.blue : Colors.grey,
-                        ),
-                      ),
-                      child: Text(
-                        slot['start'],
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: Offset(1.0, 0.0),
+                      end: Offset(0.0, 0.0),
+                    ).animate(animation),
+                    child: child,
                   );
-                }).toList(),
+                },
+                child: Wrap(
+                  key: ValueKey<String>(selectedDate),
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: availableSlots.map<Widget>((slot) {
+                    bool isSelected = selectedSlot == slot;
+                    return Container(
+                      width: 80,
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (slot['booked']) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('Slot already booked!'),
+                            ));
+                            setState(() {
+                              selectedSlot = null;
+                            });
+                          } else {
+                            setState(() {
+                              selectedSlot = slot;
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: slot['booked']
+                              ? Colors.grey
+                              : isSelected
+                                  ? Colors.blue
+                                  : Colors.white,
+                          foregroundColor:
+                              isSelected ? Colors.white : Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          side: BorderSide(
+                            color: isSelected ? Colors.blue : Colors.grey,
+                          ),
+                        ),
+                        child: Text(
+                          slot['start'],
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
             if (selectedSlot != null && !selectedSlot!['booked'])
@@ -250,10 +263,17 @@ class _CourtReservationPageState extends State<CourtReservationPage> {
     List<Map<String, dynamic>> availableSlots = [];
     if (availability.containsKey(selectedDate)) {
       DateTime now = DateTime.now();
+      DateTime selectedDateTime = DateTime.parse(selectedDate);
       for (var slot in availability[selectedDate]) {
         DateTime slotTime = DateFormat('HH:mm').parse(slot['start']);
-        if (now.isBefore(DateTime(
-            now.year, now.month, now.day, slotTime.hour, slotTime.minute))) {
+        DateTime slotDateTime = DateTime(
+          selectedDateTime.year,
+          selectedDateTime.month,
+          selectedDateTime.day,
+          slotTime.hour,
+          slotTime.minute,
+        );
+        if (selectedDateTime.isAfter(now) || slotDateTime.isAfter(now)) {
           availableSlots.add(slot);
         }
       }

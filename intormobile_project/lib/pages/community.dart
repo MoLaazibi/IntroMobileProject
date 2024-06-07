@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CommunityPage extends StatelessWidget {
+class CommunityPage extends StatefulWidget {
+  @override
+  _CommunityPageState createState() => _CommunityPageState();
+}
+
+class _CommunityPageState extends State<CommunityPage> {
   final CollectionReference users =
       FirebaseFirestore.instance.collection('users');
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +56,22 @@ class CommunityPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              TextField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by name',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value.toLowerCase();
+                  });
+                },
+              ),
+              SizedBox(height: 10),
               Text(
                 'Suggested for you',
                 style: TextStyle(
@@ -59,7 +82,7 @@ class CommunityPage extends StatelessWidget {
               ),
               SizedBox(height: 10),
               Container(
-                height: 200, // Verhoog de hoogte van de container
+                height: 200,
                 child: StreamBuilder<QuerySnapshot>(
                   stream: users.snapshots(),
                   builder: (context, snapshot) {
@@ -68,13 +91,20 @@ class CommunityPage extends StatelessWidget {
                     }
 
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
                     }
+
+                    var filteredUsers = snapshot.data!.docs.where((doc) {
+                      var data = doc.data() as Map<String, dynamic>;
+                      var name = data['name']?.toLowerCase() ?? '';
+                      return name.contains(searchQuery);
+                    }).toList();
 
                     return ListView(
                       scrollDirection: Axis.horizontal,
-                      children:
-                          snapshot.data!.docs.map((DocumentSnapshot document) {
+                      children: filteredUsers.map((DocumentSnapshot document) {
                         Map<String, dynamic> data =
                             document.data()! as Map<String, dynamic>;
                         String name = data['name'] ?? 'Unknown';
@@ -104,8 +134,7 @@ class CommunityPage extends StatelessWidget {
       margin: EdgeInsets.only(right: 10),
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(
-              16.0), // Verhoog de padding binnen de kaarten
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
@@ -113,7 +142,7 @@ class CommunityPage extends StatelessWidget {
                 ClipOval(
                   child: Image.network(
                     imageUrl,
-                    height: 65, // Verhoog de hoogte van de afbeelding
+                    height: 65,
                     width: 70,
                     fit: BoxFit.cover,
                   ),
@@ -123,7 +152,7 @@ class CommunityPage extends StatelessWidget {
               SizedBox(height: 10),
               Text(
                 title,
-                style: TextStyle(fontSize: 12), // Verhoog de lettergrootte
+                style: TextStyle(fontSize: 12),
                 textAlign: TextAlign.center,
               ),
               ElevatedButton(

@@ -211,7 +211,7 @@ class _CourtSearchPageState extends State<CourtSearchPage> {
                                     ),
                                   ),
                                   Text(
-                                    '€${courtData['price'].toString()} per hour',
+                                    '€${courtData['price'].toString()} per 30 min',
                                     style: TextStyle(
                                       fontSize: 16,
                                       color: Colors.white,

@@ -1,6 +1,9 @@
-import 'community.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intormobile_project/pages/community.dart';
+import 'package:intormobile_project/pages/profile.dart';
+import 'court_detail.dart';
 
 class HomePage extends StatefulWidget {
   final User currentUser;
@@ -13,11 +16,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  Map<String, dynamic>? userData;
 
-  static List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
-    CommunityPage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() async {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.currentUser.uid)
+        .get();
+    setState(() {
+      userData = userDoc.data() as Map<String, dynamic>?;
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -27,6 +42,20 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (userData == null) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    List<Widget> _widgetOptions = <Widget>[
+      HomeScreen(),
+      CommunityPage(),
+      ProfilePage(userData: userData!),
+    ];
+
     return Scaffold(
       body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
@@ -53,6 +82,9 @@ class _HomePageState extends State<HomePage> {
 }
 
 class HomeScreen extends StatelessWidget {
+  final CollectionReference courts =
+      FirebaseFirestore.instance.collection('courts');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,11 +144,11 @@ class HomeScreen extends StatelessWidget {
                       context,
                       navUrl: "/court_search"),
                   _buildFeatureCard(
-                    'Play an open match',
-                    'If you are looking for players at your level',
-                    Icons.sports_tennis,
-                    context,
-                  ),
+                      'Play an open match',
+                      'If you are looking for players at your level',
+                      Icons.sports_tennis,
+                      context,
+                      navUrl: "/games"),
                   _buildFeatureCard(
                       'Classes',
                       'Find classes to improve your game',
@@ -137,25 +169,31 @@ class HomeScreen extends StatelessWidget {
               SizedBox(height: 20),
               SizedBox(
                 height: 150,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: <Widget>[
-                    _buildClubCard(
-                        'Padel 4U2 Gent',
-                        'Gent',
-                        'https://padel4u2.weebly.com/uploads/1/2/6/8/126890432/105581875-3056729781048183-5951190146469912291-o_orig.jpg',
-                        context),
-                    _buildClubCard(
-                        'Padelland',
-                        'Linkeroever',
-                        'https://lh3.googleusercontent.com/p/AF1QipMrb6Hv5TM8diZHDHXZJlTcpOxHVtZg27lJuPqw=s1360-w1360-h1020-rw',
-                        context),
-                    _buildClubCard(
-                        'Ter Eiken',
-                        'Edegem',
-                        'https://static.wixstatic.com/media/f5002f_66a73f90dfb14e448c3a96484f31b98f~mv2.jpg/v1/fill/w_456,h_350,al_c,q_80,usm_0.66_1.00_0.01,enc_auto/DJI_0106.jpg',
-                        context),
-                  ],
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: courts.snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Text('Something went wrong');
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      children:
+                          snapshot.data!.docs.map((DocumentSnapshot document) {
+                        Map<String, dynamic> data =
+                            document.data()! as Map<String, dynamic>;
+                        String name = data['name'] ?? 'Unknown';
+                        String location = data['location'] ?? 'Unknown';
+                        String imgUrl = data['img_url'] ?? '';
+                        return _buildClubCard(
+                            name, location, imgUrl, context, document);
+                      }).toList(),
+                    );
+                  },
                 ),
               ),
             ],
@@ -196,12 +234,23 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildClubCard(
-      String name, String location, String imageUrl, BuildContext context) {
+  Widget _buildClubCard(String name, String location, String imageUrl,
+      BuildContext context, DocumentSnapshot document) {
     return InkWell(
       onTap: () {
-        // Action when club card is tapped
-        print('$name tapped');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CourtDetailPage(
+              name: name,
+              location: location,
+              imageUrl: imageUrl,
+              description: _getDescription(name),
+              court: document,
+              currentUser: FirebaseAuth.instance.currentUser!,
+            ),
+          ),
+        );
       },
       child: Card(
         child: Container(
@@ -243,5 +292,28 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getDescription(String name) {
+    switch (name) {
+      case 'Padel De Velden':
+        return 'Sfeervolle clubbeleving\n'
+            '6 Kwalitatieve panoramische outdoor padel terreinen, open 7/7, 7-23u\n'
+            'Rustige groene omgeving in hartje Kempen\n'
+            'Lessen, stages en events in samenwerking met Belgium Padel Academy\n'
+            'Drankgelegenheid in cafetaria "Den Tennis"\n'
+            'Gratis private parking';
+      case 'Padel 4U2 Gent':
+        return 'Padel 4U2 Gent opende op 1 juli 2012 als eerste padel club in België z\'n deuren. Gedurende de voorbije jaren was het dé plaats bij uitstek waar velen gebeten werden door de padel microbe. Met een mix van initiaties, lessen, leden en ad-hoc spelers, teambuildings en een actieve jeugdwerking is het uitgegroeid tot een bloeiende club waar dagelijks iedereen terecht kan voor een leuke partij padel!';
+      case 'Padelland':
+        return 'Our Service Is Ace, onze slogan duidt waar Padelland voor staat.\n'
+            'In Padelland staat de klant centraal, dit door het hanteren van lagere prijzen, kwaliteitsvolle indoor courts, topcoaches en sfeervolle, goed georganiseerde tornooien.\n'
+            'Kom zeker eens langs.\n'
+            'Tot snel!';
+      case 'Ter Eiken':
+        return 'Ter Eiken staat garant voor topklasse op sportief vlak met een ruim assortiment sport- en ontspanningsmogelijkheden voor recreanten en topsporters. Iedereen kan bij ons terecht om in de beste omstandigheden te sporten of te genieten in ons gezellig clubhuis of onze zomerchalet met zonneterras. Wij hebben ook een ruime parking ter beschikking. Kijk gerust eens naar onze foto\'s.';
+      default:
+        return 'No description available.';
+    }
   }
 }
